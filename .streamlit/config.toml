@@ -1,0 +1,55 @@
+# Industrial & Editorial Dark Theme (Anti-Slop Native Streamlit Config)
+[theme]
+base = "dark"
+primaryColor = "#FF3E00"
+backgroundColor = "#0A0A0B"
+secondaryBackgroundColor = "#121214"
+codeBackgroundColor = "#121214"
+textColor = "#EDEDEF"
+linkColor = "#EDEDEF"
+borderColor = "#1E1E22"
+codeTextColor = "#EDEDEF"
+showWidgetBorder = true
+showSidebarBorder = true
+baseRadius = "4px"
+buttonRadius = "4px"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+headingFont = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap"
+codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap"
+baseFontSize = 14
+baseFontWeight = 400
+codeFontSize = "0.84rem"
+headingFontSizes = ["28px", "22px", "18px", "15px", "14px", "12px"]
+headingFontWeights = [600, 600, 600, 500, 500, 500]
+metricValueFontSize = "1.85rem"
+metricValueFontWeight = 600
+linkUnderline = false
+paddingTop = "1.5rem"
+paddingBottom = "2.5rem"
+
+# Semantic Palette (Monochromatic + Signal Orange)
+redColor = "#FF3E00"
+orangeColor = "#F59E0B"
+yellowColor = "#EAB308"
+greenColor = "#10B981"
+blueColor = "#A1A1AA"
+violetColor = "#71717A"
+grayColor = "#71717A"
+
+# Chart & Dataframe Chrome
+chartCategoricalColors = ["#FF3E00", "#EDEDEF", "#A1A1AA", "#71717A", "#52525B", "#3F3F46", "#27272A"]
+chartSequentialColors = ["#121214", "#1E1E22", "#27272A", "#3F3F46", "#52525B", "#71717A", "#A1A1AA", "#D4D4D8", "#F97316", "#FF3E00"]
+dataframeBorderColor = "#1E1E22"
+dataframeHeaderBackgroundColor = "#121214"
+dataframeHeaderTextColor = "#A1A1AA"
+
+[theme.sidebar]
+backgroundColor = "#080809"
+secondaryBackgroundColor = "#121214"
+codeBackgroundColor = "#121214"
+textColor = "#EDEDEF"
+borderColor = "#1E1E22"
+primaryColor = "#FF3E00"
+linkColor = "#EDEDEF"
+paddingTop = "1.25rem"
+paddingBottom = "1.5rem"
