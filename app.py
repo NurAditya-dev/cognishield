@@ -359,7 +359,7 @@ st.html("""
     }
     .dossier-head {
         border-bottom: 1px solid var(--hairline);
-        padding: 9px 16px;
+        padding: 10px 18px;
         display: flex;
         justify-content: space-between;
         font-family: 'JetBrains Mono', monospace;
@@ -367,14 +367,76 @@ st.html("""
         color: var(--text-muted);
         background: var(--bg-panel);
     }
-    .dossier-pre {
-        padding: 20px;
-        margin: 0;
+    .dossier-body {
+        padding: 20px 22px;
         font-family: 'JetBrains Mono', monospace;
         font-size: 0.8rem;
-        line-height: 1.65;
+        line-height: 1.7;
         color: var(--text-primary);
-        white-space: pre-wrap;
+    }
+    .dossier-banner {
+        border-bottom: 1px solid var(--hairline);
+        padding-bottom: 12px;
+        margin-bottom: 18px;
+    }
+    .dossier-banner-title {
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: 0.04em;
+    }
+    .dossier-banner-sub {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        margin-top: 2px;
+    }
+    .dossier-sec {
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--hairline);
+    }
+    .dossier-sec:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+    .dossier-sec-title {
+        font-size: 0.74rem;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.08em;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+    }
+    .dossier-kv {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 6px 14px;
+        margin-bottom: 6px;
+    }
+    .dossier-k {
+        color: var(--text-muted);
+    }
+    .dossier-v {
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+        font-size: 0.85rem;
+    }
+    .dossier-vec-row {
+        display: grid;
+        grid-template-columns: 210px 130px 60px;
+        align-items: center;
+        gap: 12px;
+        padding: 4px 0;
+    }
+    .dossier-step {
+        display: grid;
+        grid-template-columns: 24px 165px 1fr;
+        gap: 8px;
+        padding: 5px 0;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+    }
+    .dossier-step:last-child {
+        border-bottom: none;
     }
 
     /* Sidebar Telemetry Table */
@@ -1106,12 +1168,93 @@ with tab3:
             )
 
         with col_term:
-            st.markdown(f"""
-            <div class='dossier-frame anim-item stagger-3'>
-                <div class='dossier-head'>
-                    <span>DOSSIER_OUTPUT.TXT</span>
-                    <span>ENCODING: UTF-8 // READONLY</span>
-                </div>
-                <pre class='dossier-pre'>{html.escape(report_text)}</pre>
-            </div>
-            """, unsafe_allow_html=True)
+            # Bangun blok HTML terstruktur per baris agar tidak pernah tergabung jadi 1 paragraf
+            vec_rows_html = []
+            if single:
+                dims = single["analysis"]["dimensions"]
+                for d_name, d_val in dims.items():
+                    filled = int(d_val / 10)
+                    bar_str = "█" * filled + "░" * (10 - filled)
+                    val_color = "#FF3E00" if d_val >= 50 else "#EDEDEF"
+                    vec_rows_html.append(
+                        f"<div class='dossier-vec-row'>"
+                        f"<span style='color:#A1A1AA;'>• {html.escape(d_name)}</span>"
+                        f"<span style='color:{val_color}; letter-spacing:1px;'>[{bar_str}]</span>"
+                        f"<span style='color:{val_color}; font-weight:600; text-align:right;'>{d_val}%</span>"
+                        f"</div>"
+                    )
+                if single["analysis"]["detected_flags"]:
+                    pemicu = ", ".join([f"{f['keyword']} ({f['dimensi']})" for f in single["analysis"]["detected_flags"]])
+                    vec_rows_html.append(
+                        f"<div class='dossier-kv' style='margin-top:10px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.06);'>"
+                        f"<span class='dossier-k'>Indikator Terdeteksi</span>"
+                        f"<span class='dossier-v'>{html.escape(pemicu)}</span>"
+                        f"</div>"
+                    )
+            if batch and batch["top_terms"]:
+                terms_str = ", ".join([f"'{t[0]}' ({t[1]})" for t in batch["top_terms"]])
+                vec_rows_html.append(
+                    f"<div class='dossier-kv' style='margin-top:8px;'>"
+                    f"<span class='dossier-k'>Slogan Direplikasi</span>"
+                    f"<span class='dossier-v'>{html.escape(terms_str)}</span>"
+                    f"</div>"
+                )
+
+            if is_high_risk:
+                directive_tag = "[DIRECTIVE: PROTOKOL MERAH — INTERVENSI AKTIF]"
+                steps = [
+                    ("01", "Audit Node", "Tandai akun dalam klaster kemiripan ≥85% untuk verifikasi bot."),
+                    ("02", "Rate Limiting", "Batasi laju distribusi tagar/slogan yang direplikasi secara mekanik."),
+                    ("03", "Prebunking", "Rilis klarifikasi fakta terverifikasi sebelum narasi mendominasi."),
+                    ("04", "Forensik Jaringan", "Simpan metadata timestamp untuk pemetaan jaringan aktor."),
+                ]
+            else:
+                directive_tag = "[DIRECTIVE: PROTOKOL STANDAR — PEMANTAUAN PASIF]"
+                steps = [
+                    ("01", "Telemetri Berkala", "Lanjutkan pemantauan sentimen 6-12 jam ke depan."),
+                    ("02", "Radar Kata Kunci", "Masukkan kata kunci dominan ke daftar pantau deteksi dini."),
+                    ("03", "Komunikasi Publik", "Pertahankan saluran informasi resmi secara transparan."),
+                ]
+
+            steps_html = "".join([
+                f"<div class='dossier-step'>"
+                f"<span style='color:#FF3E00; font-weight:600;'>{num}.</span>"
+                f"<span style='color:#EDEDEF; font-weight:600;'>{label}</span>"
+                f"<span style='color:#A1A1AA; font-family:Inter,sans-serif; font-size:0.84rem;'>{desc}</span>"
+                f"</div>"
+                for num, label, desc in steps
+            ])
+
+            dossier_html = (
+                f"<div class='dossier-frame anim-item stagger-3'>"
+                f"<div class='dossier-head'>"
+                f"<span>DOSSIER_OUTPUT.TXT</span>"
+                f"<span>ENCODING: UTF-8 // READONLY</span>"
+                f"</div>"
+                f"<div class='dossier-body'>"
+                f"<div class='dossier-banner'>"
+                f"<div class='dossier-banner-title'>COGNISHIELD // TACTICAL THREAT INTELLIGENCE DOSSIER</div>"
+                f"<div class='dossier-banner-sub'>CLASSIFICATION: RESTRICTED // INTERNAL CYBER DEFENSE UNIT</div>"
+                f"</div>"
+                f"<div class='dossier-sec'>"
+                f"<div class='dossier-sec-title'>[01] RINGKASAN EKSEKUTIF</div>"
+                f"<div class='dossier-kv'><span class='dossier-k'>Status Ancaman</span><span style='color:{dir_color}; font-weight:700;'>{html.escape(threat_level)}</span></div>"
+                f"<div class='dossier-kv'><span class='dossier-k'>Evaluasi</span><span class='dossier-v'>{html.escape(summary_narrative)}</span></div>"
+                f"</div>"
+                f"<div class='dossier-sec'>"
+                f"<div class='dossier-sec-title'>[02] VEKTOR RISIKO &amp; INDIKATOR LEKSIKAL</div>"
+                f"{''.join(vec_rows_html)}"
+                f"</div>"
+                f"<div class='dossier-sec'>"
+                f"<div class='dossier-sec-title'>[03] PROTOKOL TINDAKAN TAKTIS (COUNTERMEASURES)</div>"
+                f"<div style='color:#EDEDEF; font-weight:600; font-size:0.76rem; margin-bottom:8px;'>{directive_tag}</div>"
+                f"{steps_html}"
+                f"</div>"
+                f"<div style='padding-top:10px; border-top:1px solid rgba(255,255,255,0.08); font-size:0.7rem; color:#71717A; display:flex; justify-content:space-between;'>"
+                f"<span>GENERATED BY COGNISHIELD ENGINE</span>"
+                f"<span>END OF DOSSIER</span>"
+                f"</div>"
+                f"</div>"
+                f"</div>"
+            )
+            st.markdown(dossier_html, unsafe_allow_html=True)
