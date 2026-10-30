@@ -12,36 +12,65 @@ from typing import Dict, List, Any, Tuple
 from .preprocessing import preprocess_text
 
 
-# Leksikon Indikator Kognitif Bahasa Indonesia
-LEXICON_SENSATIONALISM = [
+# Leksikon Indikator Kognitif Bahasa Indonesia (Unik & Ternormalisasi)
+LEXICON_SENSATIONALISM = list(dict.fromkeys([
     "viralkan", "sebarkan", "sebar luaskan", "wajib tahu", "jangan kaget",
     "bongkar habis", "terbongkar", "gawat darurat", "parah banget", "gempar",
     "menghebohkan", "bikin syok", "jangan diam", "awas tertipu", "darurat",
     "buka mata", "semua harus tahu", "terkuak fakta", "viral", "hancur lebur",
-    "heboh", "luar biasa parah", "detik detik", "terbaru menggemparkan"
-]
+    "heboh", "luar biasa parah", "detik detik", "terbaru menggemparkan",
+    "akhirnya terkuak", "borok", "aib", "skandal besar", "fakta mengejutkan",
+    "kuliti habis", "dikuliti habis", "terciduk", "bukti nyata", "bikin geger",
+    "pecah", "detik-detik", "mendadak", "auto", "ngeri banget", "blunder fatal",
+    "ketar-ketir", "ketar ketir", "panik", "skakmat", "tamparan keras",
+    "rata dengan tanah", "krisis besar"
+]))
 
-LEXICON_PROVOCATION = [
+LEXICON_PROVOCATION = list(dict.fromkeys([
     "antek", "khianat", "pengkhianat", "rezim", "musuh bersama", "hancurkan",
     "laknat", "biadab", "sesat", "goblok", "tolol", "dungu", "fitnah",
     "bajingan", "bangsat", "kadrun", "cebong", "penjilat", "komunis",
     "antek asing", "antek aseng", "musnahkan", "usir", "tenggelamkan",
-    "haram jadah", "iblis", "murtad", "penipu", "pemberontak"
-]
+    "haram jadah", "iblis", "murtad", "penipu", "pemberontak", "boikot",
+    "serbu", "geruduk", "jangan kasih panggung", "viralkan biar kapok",
+    "tandai mukanya", "bubarkan", "turunkan", "lawan", "kawal sampai tuntas",
+    "dikawal sampai", "buka mata kalian", "jangan mau dibodohi",
+    "sampai kapan kita diam", "darah mendidih", "menginjak-injak",
+    "menginjak injak", "pelecehan terhadap", "merusak moral", "perusak moral",
+    "adu domba", "pecah belah", "pengkhianat bangsa", "musuh rakyat",
+    "ancaman nyata"
+]))
 
-LEXICON_CONSPIRACY_FRAMING = [
+LEXICON_CONSPIRACY_FRAMING = list(dict.fromkeys([
     "media bungkam", "media bayaran", "disembunyikan", "fakta sebenarnya",
     "agenda tersembunyi", "rekayasa", "skenario jahat", "agenda global",
     "konspirasi", "cuci otak", "fakta ditutupi", "pembodohan massal",
     "disetir", "didalangi", "ada konspirasi", "jangan mau dibodohi",
-    "dalang utama", "fakta yang ditutup tutupi", "kambing hitam", "sandiwara"
-]
+    "dalang utama", "fakta yang ditutup tutupi", "ditutup-tutupi",
+    "ditutup tutupi", "kambing hitam", "sandiwara", "fufufafa",
+    "saya menerima laporan", "saya dapat laporan", "pengalihan isu",
+    "settingan", "skenario besar", "dikondisikan", "operasi senyap",
+    "agenda terselubung", "ada udang di balik batu", "framing jahat",
+    "pembingkaian jahat", "propaganda", "dalang", "aktor intelektual",
+    "aktor intelektualnya", "oligarki", "boneka", "cukong", "bekingan",
+    "pesanan sponsor", "mafia", "kartel", "tangan tak terlihat",
+    "ditunggangi", "permainan elit", "dibungkam", "kriminalisasi",
+    "tebang pilih", "pesanan pusat", "menggiring opini"
+]))
 
-LEXICON_TOXICITY = [
+LEXICON_TOXICITY = list(dict.fromkeys([
     "benci", "jijik", "hina", "najis", "muntah", "muak", "sampah", "mati kau",
     "pengecut", "biadab", "hancur", "perusak", "busuk", "laknat", "celaka",
-    "bodoh sekali", "gak guna", "sampah masyarakat", "kutuk", "terkutuk"
-]
+    "bodoh sekali", "gak guna", "tidak guna", "sampah masyarakat", "kutuk",
+    "terkutuk", "boti", "bangsat", "iblis", "setan", "maling", "pengkhianat",
+    "penipu", "pembohong", "buzzerRp", "buzzerrp", "pendengung", "cebong",
+    "kadrun", "kampret", "bayaran", "pasukan nasi bungkus", "penjilat",
+    "antek", "kacung", "ternak", "SDM rendah", "sdm rendah", "IQ jongkok",
+    "iq jongkok", "otak udang", "gagal paham", "kurang literasi", "dungu",
+    "dongo", "tolol", "halu", "buta hati", "mental pengemis", "munafik",
+    "playing victim", "pencitraan", "badut politik", "beban negara",
+    "bermuka dua", "tidak tahu malu"
+]))
 
 
 class CognitiveRiskScorer:
@@ -66,37 +95,44 @@ class CognitiveRiskScorer:
 
     def _calculate_dimension_score(
         self,
-        text_lower: str,
+        text_cleaned: str,
+        raw_lower: str,
         lexicon: List[str],
-        base_factor: float = 25.0
+        base_factor: float = 28.0
     ) -> Tuple[float, List[str]]:
         """
         Menghitung skor dimensi berdasarkan deteksi kecocokan leksikon kata kunci dan intensitas.
+        Mencocokkan secara case-insensitive baik pada teks yang telah dinormalisasi maupun teks asli.
         """
         detected = []
         raw_count = 0
 
         for keyword in lexicon:
-            # Gunakan regex boundary atau substring frase
-            pattern = r'\b' + re.escape(keyword) + r'\b' if ' ' not in keyword else re.escape(keyword)
-            matches = len(re.findall(pattern, text_lower))
+            kw_lower = keyword.lower().strip()
+            kw_norm = kw_lower.replace("-", " ")
+
+            pattern_raw = r'\b' + re.escape(kw_lower) + r'\b' if ' ' not in kw_lower else re.escape(kw_lower)
+            pattern_norm = r'\b' + re.escape(kw_norm) + r'\b' if ' ' not in kw_norm else re.escape(kw_norm)
+
+            matches_norm = len(re.findall(pattern_norm, text_cleaned, flags=re.IGNORECASE))
+            matches_raw = len(re.findall(pattern_raw, raw_lower, flags=re.IGNORECASE))
+            matches = max(matches_norm, matches_raw)
+
             if matches > 0:
-                detected.append(keyword)
+                if kw_lower not in [d.lower() for d in detected]:
+                    detected.append(keyword)
                 raw_count += matches
 
-        # Penilaian asimtotik skor (0 - 100)
-        # 1 match ~ 28-35, 2 match ~ 55-65, 3+ match ~ 80-100
         score = min(100.0, raw_count * base_factor)
         return round(score, 1), detected
 
     def _assess_stylistic_urgency(self, raw_text: str) -> float:
         """
-        Menilai gaya tipografi manipulatif: HURUF BESAR BERLEBIH dan tanda seru ganda.
+        Menilai gaya tipografi manipulatif: HURUF BESAR BERLEBIH dan tanda seru.
         """
         if not raw_text:
             return 0.0
 
-        # Rasio huruf kapital
         alpha_chars = [c for c in raw_text if c.isalpha()]
         if len(alpha_chars) >= 10:
             upper_ratio = sum(1 for c in alpha_chars if c.isupper()) / len(alpha_chars)
@@ -105,9 +141,9 @@ class CognitiveRiskScorer:
 
         caps_penalty = 30.0 if upper_ratio > 0.40 else (15.0 if upper_ratio > 0.25 else 0.0)
 
-        # Tanda seru ganda (misal: !!, !!!)
-        exclamation_count = len(re.findall(r'!{2,}', raw_text))
-        exclamation_penalty = min(30.0, exclamation_count * 15.0)
+        double_excl = len(re.findall(r'!{2,}', raw_text))
+        single_excl = 1 if '!' in raw_text and double_excl == 0 else 0
+        exclamation_penalty = min(30.0, (double_excl * 15.0) + (single_excl * 6.0))
 
         return min(50.0, caps_penalty + exclamation_penalty)
 
@@ -131,24 +167,23 @@ class CognitiveRiskScorer:
                 "summary": "Teks kosong atau tidak mengandung narasi yang dapat dinilai."
             }
 
-        # Pra-pemrosesan teks untuk pencocokan leksikon
         cleaned_text = preprocess_text(raw_text, remove_url=True, remove_emoji=True, to_lower=True)
+        raw_lower = raw_text.lower()
 
         # 1. Sensasionalitas & Urgensi
-        sens_score, sens_flags = self._calculate_dimension_score(cleaned_text, LEXICON_SENSATIONALISM, base_factor=25.0)
+        sens_score, sens_flags = self._calculate_dimension_score(cleaned_text, raw_lower, LEXICON_SENSATIONALISM, base_factor=26.0)
         style_urgency = self._assess_stylistic_urgency(raw_text)
         sens_score = min(100.0, sens_score + (style_urgency * 0.4))
 
         # 2. Provokasi & Polarisasi
-        prov_score, prov_flags = self._calculate_dimension_score(cleaned_text, LEXICON_PROVOCATION, base_factor=30.0)
+        prov_score, prov_flags = self._calculate_dimension_score(cleaned_text, raw_lower, LEXICON_PROVOCATION, base_factor=30.0)
 
         # 3. Manipulasi & Narasi Konspirasi
-        consp_score, consp_flags = self._calculate_dimension_score(cleaned_text, LEXICON_CONSPIRACY_FRAMING, base_factor=32.0)
+        consp_score, consp_flags = self._calculate_dimension_score(cleaned_text, raw_lower, LEXICON_CONSPIRACY_FRAMING, base_factor=32.0)
 
         # 4. Toksisitas Emosional
-        tox_score, tox_flags = self._calculate_dimension_score(cleaned_text, LEXICON_TOXICITY, base_factor=28.0)
+        tox_score, tox_flags = self._calculate_dimension_score(cleaned_text, raw_lower, LEXICON_TOXICITY, base_factor=28.0)
 
-        # Hitung skor agregat tertimbang dan perhatikan lonjakan dimensi kritis
         weighted_score = (
             sens_score * self.weights["sensationalism"] +
             prov_score * self.weights["provocation"] +
@@ -156,23 +191,21 @@ class CognitiveRiskScorer:
             tox_score * self.weights["toxicity"]
         )
         max_dim_score = max(sens_score, prov_score, consp_score, tox_score)
-        
-        # Kombinasi tertimbang dengan pembobotan dimensi kritis
-        combined_score = (0.65 * weighted_score) + (0.35 * max_dim_score)
+
+        combined_score = (0.55 * weighted_score) + (0.45 * max_dim_score)
         overall_score = round(min(100.0, max(0.0, combined_score)), 1)
 
-        # Penentuan Kategori Risiko Kognitif (Aman, Waspada, Bahaya)
-        if overall_score < 30.0 and max_dim_score < 60.0:
+        if overall_score < 25.0 and max_dim_score < 50.0:
             category = "Aman"
-            color = "#28a745"  # Hijau
+            color = "#28a745"
             summary_desc = "Narasi berada pada kategori risiko rendah. Tidak ditemukan pola provokasi agresif, amplifikasi kebencian, atau urgensi artifisial."
-        elif overall_score < 65.0 and max_dim_score < 85.0:
+        elif overall_score < 60.0 and max_dim_score < 85.0:
             category = "Waspada"
-            color = "#fd7e14"  # Oranye / Kuning Waspada
-            summary_desc = "Narasi menunjukkan indikasi pembingkaian emosional atau retorika yang berpotensi memicu polarisasi opini publik."
+            color = "#fd7e14"
+            summary_desc = "Narasi menunjukkan indikasi pembingkaian emosional, konspirasi, atau retorika yang berpotensi memicu polarisasi opini publik."
         else:
             category = "Bahaya"
-            color = "#dc3545"  # Merah
+            color = "#dc3545"
             summary_desc = "Tingkat risiko kognitif tinggi! Terdeteksi muatan provokasi tajam, pembingkaian manipulatif, toksisitas, atau ajakan amplifikasi agresif."
 
         all_flags = []

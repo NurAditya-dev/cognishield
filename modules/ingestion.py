@@ -11,8 +11,8 @@ import pandas as pd
 
 # Kandidat nama kolom teks umum dalam dataset media sosial Indonesia
 CANDIDATE_TEXT_COLUMNS = [
-    "text", "teks", "content", "konten", "post", "tweet", "komentar",
-    "caption", "narasi", "pesan", "message", "body", "kalimat"
+    "text", "teks", "comment_text", "comment", "content", "konten", "post",
+    "tweet", "komentar", "caption", "narasi", "pesan", "message", "body", "kalimat"
 ]
 
 
@@ -32,7 +32,6 @@ def load_dataframe_from_file(file_obj: Any) -> pd.DataFrame:
             if isinstance(data, list):
                 return pd.DataFrame(data)
             elif isinstance(data, dict):
-                # Jika objek kamus berisi list
                 for val in data.values():
                     if isinstance(val, list):
                         return pd.DataFrame(val)
@@ -40,16 +39,13 @@ def load_dataframe_from_file(file_obj: Any) -> pd.DataFrame:
         except Exception as e:
             raise ValueError(f"Gagal memproses berkas JSON: {str(e)}")
     else:
-        # Default proses sebagai CSV
         try:
-            # Reset pointer
             if hasattr(file_obj, "seek"):
                 file_obj.seek(0)
             df = pd.read_csv(file_obj)
             return df
         except Exception:
             try:
-                # Coba dengan encoding latin1 atau delimiter titikkoma (;) jika gagal
                 if hasattr(file_obj, "seek"):
                     file_obj.seek(0)
                 df = pd.read_csv(file_obj, sep=None, engine="python", encoding="utf-8-sig")
@@ -65,13 +61,11 @@ def detect_text_column(df: pd.DataFrame) -> Optional[str]:
     if df.empty:
         return None
 
-    # 1. Cek kecocokan nama kolom persis
     lower_cols = {col.lower().strip(): col for col in df.columns}
     for cand in CANDIDATE_TEXT_COLUMNS:
         if cand in lower_cols:
             return lower_cols[cand]
 
-    # 2. Cek kolom bertipe string / object dengan rata-rata panjang teks tertinggi
     text_candidates = []
     for col in df.columns:
         if df[col].dtype == object or pd.api.types.is_string_dtype(df[col]):
@@ -81,7 +75,6 @@ def detect_text_column(df: pd.DataFrame) -> Optional[str]:
                 text_candidates.append((col, avg_len))
 
     if text_candidates:
-        # Pilih kolom dengan rata-rata teks paling panjang
         text_candidates.sort(key=lambda x: x[1], reverse=True)
         return text_candidates[0][0]
 
@@ -96,6 +89,5 @@ def extract_clean_posts(df: pd.DataFrame, text_col: str) -> List[str]:
         return []
 
     texts = df[text_col].dropna().astype(str).tolist()
-    # Hapus spasi berlebih dan teks kosong
     cleaned_posts = [t.strip() for t in texts if len(t.strip()) > 0]
     return cleaned_posts
